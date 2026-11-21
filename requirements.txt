@@ -1,0 +1,21 @@
+# Core RAG pipeline (equivalent to `pip install -e .`)
+pandas>=2.0
+pyarrow>=14
+fsspec
+huggingface_hub>=0.23
+torch>=2.1
+transformers>=4.40
+accelerate>=0.30
+sentence-transformers>=2.7
+langchain-core>=0.3
+langchain-community>=0.3
+langchain-huggingface>=0.1
+langchain-text-splitters>=0.3
+faiss-cpu>=1.8
+
+# Optional: Phase 1 NLP analysis (preprocessing.py)
+# nltk>=3.8
+# spacy>=3.7   then: python -m spacy download en_core_web_sm
+
+# Optional: 4-bit model loading on CUDA GPUs (--4bit)
+# bitsandbytes>=0.43

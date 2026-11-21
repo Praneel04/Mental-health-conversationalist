@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.env
+.ipynb_checkpoints/
+.DS_Store
+
+# Generated data and indexes
+artifacts/
+mental_health_db/
+*.parquet

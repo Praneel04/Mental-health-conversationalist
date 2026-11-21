@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mental-health-rag"
+version = "0.1.0"
+description = "Retrieval-augmented mental-health chatbot with Chain/Tree/Graph-of-Thoughts prompting"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pandas>=2.0",
+    "pyarrow>=14",
+    "fsspec",
+    "huggingface_hub>=0.23",
+    "torch>=2.1",
+    "transformers>=4.40",
+    "accelerate>=0.30",
+    "sentence-transformers>=2.7",
+    "langchain-core>=0.3",
+    "langchain-community>=0.3",
+    "langchain-huggingface>=0.1",
+    "langchain-text-splitters>=0.3",
+    "faiss-cpu>=1.8",
+]
+
+[project.optional-dependencies]
+nlp = ["nltk>=3.8", "spacy>=3.7"]
+quant = ["bitsandbytes>=0.43"]
+
+[project.scripts]
+mental-health-rag = "mental_health_rag.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
