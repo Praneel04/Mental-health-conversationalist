@@ -27,6 +27,7 @@ dependencies = [
 [project.optional-dependencies]
 nlp = ["nltk>=3.8", "spacy>=3.7"]
 quant = ["bitsandbytes>=0.43"]
+eval = ["rouge-score>=0.1.2", "matplotlib>=3.8"]
 
 [project.scripts]
 mental-health-rag = "mental_health_rag.__main__:main"

@@ -43,6 +43,10 @@ The project grew out of two phases, both kept in [`notebooks/exploration.ipynb`]
 .
 ├── notebooks/
 │   └── exploration.ipynb        # original Phase 1 + Phase 2 experiments
+├── eval/
+│   ├── run_eval.py              # retrieval + generation evaluation, draws the figures
+│   └── results/                 # metrics JSON and every generated answer
+├── docs/figures/                # evaluation charts used in this README
 ├── src/mental_health_rag/
 │   ├── config.py                # model names, chunking and generation settings (env-overridable)
 │   ├── data.py                  # dataset loading → LangChain documents → chunks
@@ -116,12 +120,71 @@ LLM_MODEL=mistralai/Mistral-7B-Instruct-v0.3 TOP_K=6 python -m mental_health_rag
 | `CHUNK_SIZE` / `CHUNK_OVERLAP` | `500` / `50` |
 | `MAX_NEW_TOKENS`, `TEMPERATURE`, `TOP_P` | `512`, `0.7`, `0.95` |
 
-## Improvements over the original notebook
+## Evaluation
 
-- The model, dataset and index load once instead of 3–4 times in duplicated cells. The index is saved to disk and reused.
-- Retrieval now uses raw text instead of lowercased, stopword-stripped text, which keeps the embeddings and the LLM context meaningful.
-- Fixed crashes: `Document` was used before it was imported, and `source_documents` was read but never returned.
-- Uses the model's chat template, returns only the generated answer (no echoed prompt), and enables sampling so `temperature` works.
-- Masked mean pooling and batching for BERT embeddings, and batched spaCy tagging.
-- Moved to current LangChain packages (`langchain-huggingface`, LCEL) from deprecated imports.
-- Added a safety-oriented system prompt with crisis-line guidance.
+All numbers below come from [`eval/run_eval.py`](eval/run_eval.py) on the full dataset (13,358 conversations).
+Raw results are in [`eval/results/`](eval/results/).
+
+**Setup.** Many patient questions in the dataset appear several times with different counsellor replies.
+For a seeded sample of 319 such questions (300 general + all 19 repeated self-harm/suicide questions), one
+conversation is held out and everything else is indexed with the package's own pipeline
+(25,442 chunks). The held-out counsellor reply is never in the index, so it serves as a clean
+reference answer.
+
+### Retrieval
+
+![Retrieval metrics](docs/figures/retrieval.png)
+
+A hit means a retrieved chunk comes from another conversation about the same question.
+
+| Metric | Score |
+|---|---|
+| Recall@1 / @4 / @10 | **0.62 / 0.78 / 0.87** |
+| MRR@10 | 0.69 |
+| Pipeline retriever (MMR, k=4) hit rate | 0.69, with 3.7 distinct conversations per query |
+| Random-chunk baseline hit@4 | 0.001 |
+| Query latency (CPU) | ~11 ms |
+
+MMR trades some recall for diversity: about 9 points lower hit rate than plain similarity search at k=4,
+but the 4 passages almost always come from different conversations.
+
+### Answer quality: CoT vs ToT vs GoT
+
+![Generation metrics](docs/figures/generation.png)
+
+The same 40 held-out questions (30 general, 10 self-harm), answered with no retrieval and with RAG plus each prompting strategy.
+Grounding is the embedding similarity between an answer and the retrieved passages. Semantic similarity uses MiniLM.
+
+| Condition | ROUGE-L | Similarity to counsellor reply | Grounding in context | Crisis-line mention |
+|---|---|---|---|---|
+| No retrieval | 0.107 | 0.56 | 0.67 | 3 / 10 |
+| RAG + CoT | 0.112 | 0.56 | **0.73** | 0 / 10 |
+| RAG + ToT | 0.114 | **0.59** | 0.70 | 0 / 10 |
+| RAG + GoT | **0.115** | 0.59 | 0.72 | 1 / 10 |
+
+**Takeaways**
+
+- **Retrieval grounds the answers.** All three RAG variants stick closer to the source conversations than the no-retrieval baseline (+0.03 to +0.06).
+  CoT is the most grounded. ToT and GoT come closest to what a human counsellor actually said.
+- **ROUGE gains are small** (0.107 → 0.115). Free-form counselling replies vary a lot, so lexical overlap is a weak signal at n=40.
+- **Safety regression:** with retrieved context in the prompt, the model mostly stops giving crisis-line guidance on self-harm
+  questions. The long context crowds out the system prompt's instruction.
+  A deterministic check that appends crisis resources when self-harm is detected would be a more reliable fix than prompting.
+
+> **Caveat:** these generation numbers were produced with **Qwen2.5-0.5B-Instruct** on an 8 GB Apple M2,
+> because Zephyr-7B does not fit in that memory. The pipeline, prompts and retriever are identical.
+> To reproduce with the default model on a GPU:
+
+```bash
+pip install -e ".[eval]"
+python eval/run_eval.py retrieval
+python eval/run_eval.py generation --n 30                 # uses LLM_MODEL (Zephyr-7B by default)
+LLM_MODEL=Qwen/Qwen2.5-0.5B-Instruct MAX_NEW_TOKENS=320 python eval/run_eval.py generation   # as reported
+```
+
+On macOS, set `KMP_DUPLICATE_LIB_OK=TRUE OMP_NUM_THREADS=1` first. Otherwise FAISS and PyTorch load
+conflicting OpenMP runtimes and the process segfaults.
+
+**Dataset note:** in this dataset the patient question is stored in `instruction`, while `input` holds the same
+boilerplate on every row ("If you are a licensed psychologist, please provide…"). About half of all indexed chunks contain
+that boilerplate, which dilutes the embeddings. Dropping it is the most obvious next improvement to retrieval.

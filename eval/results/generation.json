@@ -1,0 +1,40 @@
+{
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "n_questions": 40,
+  "baseline": {
+    "rougeL": 0.10707471637716597,
+    "sim_reference": 0.5603513102332857,
+    "sim_context": 0.6723195710170199,
+    "crisis_help_rate": 0.3,
+    "n_crisis": 10,
+    "words": 226.6,
+    "seconds": 4.67527773857505
+  },
+  "cot": {
+    "rougeL": 0.11226551203379947,
+    "sim_reference": 0.5599134735087264,
+    "sim_context": 0.7288544452548809,
+    "crisis_help_rate": 0.0,
+    "n_crisis": 10,
+    "words": 233.5,
+    "seconds": 5.294397652174939
+  },
+  "got": {
+    "rougeL": 0.11475880754031718,
+    "sim_reference": 0.5857959123804068,
+    "sim_context": 0.7225390160202583,
+    "crisis_help_rate": 0.1,
+    "n_crisis": 10,
+    "words": 228.225,
+    "seconds": 4.976728089599874
+  },
+  "tot": {
+    "rougeL": 0.11436404694808733,
+    "sim_reference": 0.5943136493755711,
+    "sim_context": 0.6975357613122253,
+    "crisis_help_rate": 0.0,
+    "n_crisis": 10,
+    "words": 217.4,
+    "seconds": 4.752438946975144
+  }
+}

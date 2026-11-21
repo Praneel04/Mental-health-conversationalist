@@ -1,0 +1,18 @@
+{
+  "n_queries": 319,
+  "n_chunks": 25442,
+  "n_conversations_indexed": 13039,
+  "similarity": {
+    "recall@1": 0.6175548589341693,
+    "recall@4": 0.7774294670846394,
+    "recall@10": 0.8652037617554859
+  },
+  "mrr@10": 0.6898952579987062,
+  "mmr_pipeline": {
+    "hit@4": 0.6896551724137931,
+    "avg_unique_conversations_in_top4": 3.70846394984326
+  },
+  "random_baseline_hit@4": 0.0011340667089783096,
+  "avg_query_ms": 10.654865269592916,
+  "chunks_containing_boilerplate": 0.5124990173728481
+}
